@@ -80,35 +80,33 @@ void ARMExecuteFINGER(Command command){
     }
 }
 
-void parseArm(const char* arg0, const char* arg1, const char* arg2, Command* Y, Command* X, Command* FINGER, Command* PrevY, Command* PrevX, Command* PrevFINGER) {
-
+void parseArm(const char* arg0, const char* arg1, const char* arg2, ArmCommand* ARM, ArmCommand* PrevARM) {
     Command arr[3]={UNKNOWN, UNKNOWN, UNKNOWN};
     
     arr[0]=parseCommand(arg0);
     arr[1]=parseCommand(arg1);
     arr[2]=parseCommand(arg2);
 
+    ARM->Y=PrevARM->Y;
+    ARM->X=PrevARM->X;
+    ARM->FINGER=PrevARM->FINGER;
+
+
     for(int i=0;i<3;i++){
         if(arr[i]>=UP&&arr[i]<=DOWN){
-            *Y=arr[i];
+            ARM->Y=arr[i];
         }else if(arr[i]>=LEFT&&arr[i]<=RIGHT){
-            *X=arr[i];
+            ARM->X=arr[i];
         }else if(arr[i]>=PINCH&&arr[i]<=RELEASE){
-            *FINGER=arr[i];
+            ARM->FINGER=arr[i];
         }
     }
 
-    if(*Y==UNKNOWN){
-        *Y=*PrevY;
-    }
-    if(*X==UNKNOWN){
-        *X=*PrevX;
-    }
-    if(*FINGER==UNKNOWN){
-        *FINGER=*PrevFINGER;
-    }
 
 }
+
+
+
 
 int main(){
 
@@ -134,8 +132,13 @@ while(1){
         printf("\nY: %d, X: %d, FINGER: %d\n", PrevARM.Y, PrevARM.X, PrevARM.FINGER);
         continue;
     }
+    if(strcmp(arg0, "reset")==0){
+        ARM=(ArmCommand){MIDDLE, CENTER, RELEASE};
+    }else{
+        parseArm(arg0, arg1, arg2, &ARM, &PrevARM);
+    }
 
-    parseArm(arg0, arg1, arg2, &ARM.Y, &ARM.X, &ARM.FINGER, &PrevARM.Y, &PrevARM.X, &PrevARM.FINGER);
+    
 
     printf("\nY: %d, X: %d, FINGER: %d\n", ARM.Y, ARM.X, ARM.FINGER);
 
