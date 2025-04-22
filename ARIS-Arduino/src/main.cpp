@@ -5,8 +5,6 @@
 #include <Adafruit_SSD1306.h>
 #include <Servo.h>
 
-
-
 typedef enum{
   
   FRONT=0,  //Y
@@ -24,17 +22,18 @@ typedef enum{
 }Command;
 
 Command parseCommand(const char* command) {
-  if (strcmp(command, "UP") == 0) return UP;
-  if (strcmp(command, "DOWN") == 0) return DOWN;
-  if (strcmp(command, "MIDDLE") == 0) return MIDDLE;
-  if (strcmp(command, "LEFT") == 0) return LEFT;
-  if (strcmp(command, "RIGHT") == 0) return RIGHT;
-  if (strcmp(command, "CENTER") == 0) return CENTER;
-  if (strcmp(command, "PINCH") == 0) return PINCH;
-  if (strcmp(command, "RELEASE") == 0) return RELEASE;
   if (strcmp(command, "FRONT") == 0) return FRONT;
   if (strcmp(command, "ORIGIN") == 0) return ORIGIN;
   if (strcmp(command, "BACK") == 0) return BACK;
+  if (strcmp(command, "LEFT") == 0) return LEFT;
+  if (strcmp(command, "CENTER") == 0) return CENTER;
+  if (strcmp(command, "RIGHT") == 0) return RIGHT;
+  if (strcmp(command, "UP") == 0) return UP;
+  if (strcmp(command, "MIDDLE") == 0) return MIDDLE;
+  if (strcmp(command, "DOWN") == 0) return DOWN;
+  if (strcmp(command, "PINCH") == 0) return PINCH;
+  if (strcmp(command, "RELEASE") == 0) return RELEASE;
+  
   return UNKNOWN;
 }
 
@@ -45,19 +44,20 @@ typedef struct ArmCommand{
   Command FINGER;
 }ArmCommand;
 
-void ARMExecuteZ(Command command){
+
+void ARMExecuteY(Command command){
   switch(command){
-      case UP:
-          printf("Executing UP command\n");
+      case FRONT:
+          Serial.println("Executing FRONT command");
           break;
-      case DOWN:
-          printf("Executing DOWN command\n");
+      case BACK:
+          Serial.println("Executing BACK command");
           break;
-      case MIDDLE:
-          printf("Executing MIDDLE command\n");
+      case ORIGIN:
+          Serial.println("Executing ORIGIN command");
           break;
       default:
-          printf("Invalid Z command\n");
+          Serial.println("Invalid Y command");
           break;
   }
 }
@@ -65,33 +65,33 @@ void ARMExecuteZ(Command command){
 void ARMExecuteX(Command command){
   switch(command){
       case LEFT:
-          printf("Executing LEFT command\n");
+          Serial.println("Executing LEFT command");
           break;
       case RIGHT:
-          printf("Executing RIGHT command\n");
+          Serial.println("Executing RIGHT command");
           break;
       case CENTER:
-          printf("Executing CENTER command\n");
+          Serial.println("Executing CENTER command");
           break;
       default:
-          printf("Invalid X command\n");
+          Serial.println("Invalid X command");
           break;
   }
 }
 
-void ARMExecuteY(Command command){
+void ARMExecuteZ(Command command){
   switch(command){
-      case FRONT:
-          printf("Executing FRONT command\n");
+      case UP:
+          Serial.println("Executing UP command");
           break;
-      case BACK:
-          printf("Executing BACK command\n");
+      case DOWN:
+          Serial.println("Executing DOWN command");
           break;
-      case ORIGIN:
-          printf("Executing ORIGIN command\n");
+      case MIDDLE:
+          Serial.println("Executing MIDDLE command");
           break;
       default:
-          printf("Invalid Y command\n");
+          Serial.println("Invalid Z command");
           break;
   }
 }
@@ -99,54 +99,100 @@ void ARMExecuteY(Command command){
 void ARMExecuteFINGER(Command command){
   switch(command){
       case PINCH:
-          printf("Executing PINCH command\n");
+          Serial.println("Executing PINCH command");
           break;
       case RELEASE:
-          printf("Executing RELEASE command\n");
+          Serial.println("Executing RELEASE command");
           break;
       default:
-          printf("Invalid FINGER command\n");
+          Serial.println("Invalid FINGER command");
           break;
   }
 }
 
-void parseArm(const char* arg0, const char* arg1, const char* arg2, ArmCommand* ARM, ArmCommand* PrevARM) {
-  Command arr[3]={UNKNOWN, UNKNOWN, UNKNOWN};
+void parseArm(char arg[4][10], ArmCommand* ARM, ArmCommand* PrevARM) {
+  Command arr[4]={UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN};
   
-  arr[0]=parseCommand(arg0);
-  arr[1]=parseCommand(arg1);
-  arr[2]=parseCommand(arg2);
-
   ARM->Y=PrevARM->Y;
   ARM->X=PrevARM->X;
+  ARM->Z=PrevARM->Z;
   ARM->FINGER=PrevARM->FINGER;
 
-
-  for(int i=0;i<3;i++){
-      if(arr[i]>=UP&&arr[i]<=DOWN){
+  for(int i=0;i<4;i++){
+      arr[i]=parseCommand(arg[i]);
+      if(arr[i]>=FRONT&&arr[i]<=BACK){
           ARM->Y=arr[i];
       }else if(arr[i]>=LEFT&&arr[i]<=RIGHT){
           ARM->X=arr[i];
+      }else if(arr[i]>=UP&&arr[i]<=DOWN){
+          ARM->Z=arr[i];
       }else if(arr[i]>=PINCH&&arr[i]<=RELEASE){
           ARM->FINGER=arr[i];
       }
   }
-
-
 }
 
-Servo XServo;
 Servo YServo;
+Servo XServo;
 Servo ZServo;
 Servo FingerServo;
 
+ArmCommand PrevARM={ORIGIN, CENTER, MIDDLE, RELEASE};
+ArmCommand ARM={ORIGIN, CENTER, MIDDLE, RELEASE};
 
 
 void setup() {
   Serial.begin(115200);
+
 }
 
 void loop() {
+
+  char armInput[50]={0};
+  char arg[4][10]={0};
+  char buffer[50];
+
+  Serial.println();
+  Serial.println();
+  Serial.print("Enter command (Y X Z FINGER): ");
+  while(!Serial.available()) {
+    // Wait for user input
+  }
+  Serial.readBytesUntil('\n', armInput, sizeof(armInput)-1);
+  armInput[strcspn(armInput, "\r\n")]=0;
+
+  sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
+  if (strcmp(arg[0], "LIST") == 0) {
+
+    snprintf(buffer, sizeof(buffer), "\nY: %d, X: %d, Z: %d, FINGER: %d\n", PrevARM.Y, PrevARM.X, PrevARM.Z, PrevARM.FINGER);
+    Serial.print(buffer);
+    return;
+  }
+  if(strcmp(arg[0], "RESET")==0){
+    ARM=(ArmCommand){ORIGIN, CENTER, MIDDLE, RELEASE};
+  }else{
+    parseArm(arg, &ARM, &PrevARM);
+  }
+
+  snprintf(buffer, sizeof(buffer), "\nY: %d, X: %d, Z: %d, FINGER: %d\n", ARM.Y, ARM.X, ARM.Z, ARM.FINGER);
+  
+
+  if(ARM.Y!=PrevARM.Y){
+    ARMExecuteY(ARM.Y);
+  }
+  if(ARM.X!=PrevARM.X){
+    ARMExecuteX(ARM.X);
+  }
+  if(ARM.Z!=PrevARM.Z){
+    ARMExecuteZ(ARM.Z);
+  }
+  if(ARM.FINGER!=PrevARM.FINGER){
+    ARMExecuteFINGER(ARM.FINGER);
+  }
+
+  PrevARM=ARM;
+
+
 
 }
 
