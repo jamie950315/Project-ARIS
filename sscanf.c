@@ -112,7 +112,6 @@ int main(){
 while(1){
 
     char armInput[100]={0};
-    char arg0[10]={0}, arg1[10]={0}, arg2[10]={0};
     char arg[3][10]={0};
 
     printf("\n\nEnter command (Y X FINGER): ");
