@@ -32,7 +32,7 @@ typedef struct ArmCommand{
     Command FINGER;
 }ArmCommand;
 
-ARMExecuteY(Command command){
+void ARMExecuteY(Command command){
     switch(command){
         case UP:
             printf("Executing UP command\n");
@@ -49,7 +49,7 @@ ARMExecuteY(Command command){
     }
 }
 
-ARMExecuteX(Command command){
+void ARMExecuteX(Command command){
     switch(command){
         case LEFT:
             printf("Executing LEFT command\n");
@@ -66,7 +66,7 @@ ARMExecuteX(Command command){
     }
 }
 
-ARMExecuteFINGER(Command command){
+void ARMExecuteFINGER(Command command){
     switch(command){
         case PINCH:
             printf("Executing PINCH command\n");
