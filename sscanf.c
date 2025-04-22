@@ -109,6 +109,7 @@ void parseArm(const char* arg0, const char* arg1, const char* arg2, Command* Y, 
     }
 
 }
+
 int main(){
 
     ArmCommand PrevARM;
@@ -128,12 +129,15 @@ while(1){
 
 
     sscanf(armInput, "%s %s %s",arg0, arg1, arg2);
+    if(strcmp(arg0, "exit")==0) break;
+    if(strcmp(arg0, "list")==0){
+        printf("\nY: %d, X: %d, FINGER: %d\n", PrevARM.Y, PrevARM.X, PrevARM.FINGER);
+        continue;
+    }
 
     parseArm(arg0, arg1, arg2, &ARM.Y, &ARM.X, &ARM.FINGER, &PrevARM.Y, &PrevARM.X, &PrevARM.FINGER);
 
-
     printf("\nY: %d, X: %d, FINGER: %d\n", ARM.Y, ARM.X, ARM.FINGER);
-    
 
     if(ARM.Y!=PrevARM.Y){
         ARMExecuteY(ARM.Y);
@@ -148,10 +152,7 @@ while(1){
     PrevARM=ARM;
 
 
-
 }
-
-
 
     return 0;
 }
