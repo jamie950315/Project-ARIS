@@ -110,42 +110,30 @@ void ARMExecuteFINGER(Command command){
   }
 }
 
-void parseArm(const char* arg0, const char* arg1, const char* arg2, const char* arg3, Command* Y, Command* X, Command* Z, Command* FINGER, Command* PrevY, Command* PrevX, Command* PrevZ, Command* PrevFINGER) {
-
-  Command arr[4]={UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN};
+void parseArm(const char* arg0, const char* arg1, const char* arg2, ArmCommand* ARM, ArmCommand* PrevARM) {
+  Command arr[3]={UNKNOWN, UNKNOWN, UNKNOWN};
   
   arr[0]=parseCommand(arg0);
   arr[1]=parseCommand(arg1);
   arr[2]=parseCommand(arg2);
-  arr[3]=parseCommand(arg3);
 
-  for(int i=0;i<4;i++){
+  ARM->Y=PrevARM->Y;
+  ARM->X=PrevARM->X;
+  ARM->FINGER=PrevARM->FINGER;
+
+
+  for(int i=0;i<3;i++){
       if(arr[i]>=UP&&arr[i]<=DOWN){
-          *Z=arr[i];
+          ARM->Y=arr[i];
       }else if(arr[i]>=LEFT&&arr[i]<=RIGHT){
-          *X=arr[i];
+          ARM->X=arr[i];
       }else if(arr[i]>=PINCH&&arr[i]<=RELEASE){
-          *FINGER=arr[i];
-      }else if(arr[i]>=FRONT&&arr[i]<=BACK){
-          *Y=arr[i];
+          ARM->FINGER=arr[i];
       }
   }
 
-  if(*Y==UNKNOWN){
-      *Y=*PrevY;
-  }
-  if(*X==UNKNOWN){
-      *X=*PrevX;
-  }
-  if(*FINGER==UNKNOWN){
-      *FINGER=*PrevFINGER;
-  }
-  if(*Z==UNKNOWN){
-      *Z=*PrevZ;
-  }
 
 }
-
 
 Servo XServo;
 Servo YServo;

@@ -80,19 +80,15 @@ void ARMExecuteFINGER(Command command){
     }
 }
 
-void parseArm(const char* arg0, const char* arg1, const char* arg2, ArmCommand* ARM, ArmCommand* PrevARM) {
+void parseArm(char arg[3][10], ArmCommand* ARM, ArmCommand* PrevARM) {
     Command arr[3]={UNKNOWN, UNKNOWN, UNKNOWN};
     
-    arr[0]=parseCommand(arg0);
-    arr[1]=parseCommand(arg1);
-    arr[2]=parseCommand(arg2);
-
     ARM->Y=PrevARM->Y;
     ARM->X=PrevARM->X;
     ARM->FINGER=PrevARM->FINGER;
 
-
     for(int i=0;i<3;i++){
+        arr[i]=parseCommand(arg[i]);
         if(arr[i]>=UP&&arr[i]<=DOWN){
             ARM->Y=arr[i];
         }else if(arr[i]>=LEFT&&arr[i]<=RIGHT){
@@ -101,10 +97,7 @@ void parseArm(const char* arg0, const char* arg1, const char* arg2, ArmCommand* 
             ARM->FINGER=arr[i];
         }
     }
-
-
 }
-
 
 
 
@@ -120,22 +113,23 @@ while(1){
 
     char armInput[100]={0};
     char arg0[10]={0}, arg1[10]={0}, arg2[10]={0};
+    char arg[3][10]={0};
 
     printf("\n\nEnter command (Y X FINGER): ");
     fgets(armInput, sizeof(armInput), stdin);
     armInput[strcspn(armInput, "\n")] = 0;
 
 
-    sscanf(armInput, "%s %s %s",arg0, arg1, arg2);
-    if(strcmp(arg0, "exit")==0) break;
-    if(strcmp(arg0, "list")==0){
+    sscanf(armInput, "%s %s %s", arg[0], arg[1], arg[2]);
+    if(strcmp(arg[0], "EXIT")==0) break;
+    if(strcmp(arg[0], "LIST")==0){
         printf("\nY: %d, X: %d, FINGER: %d\n", PrevARM.Y, PrevARM.X, PrevARM.FINGER);
         continue;
     }
-    if(strcmp(arg0, "reset")==0){
+    if(strcmp(arg[0], "RESET")==0){
         ARM=(ArmCommand){MIDDLE, CENTER, RELEASE};
     }else{
-        parseArm(arg0, arg1, arg2, &ARM, &PrevARM);
+        parseArm(arg, &ARM, &PrevARM);
     }
 
     
