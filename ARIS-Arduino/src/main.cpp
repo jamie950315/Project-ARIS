@@ -41,6 +41,11 @@ typedef enum{
   UNKNOWN
 }Command;
 
+const char* commandNames[] = {
+  "FRONT", "ORIGIN", "BACK", "LEFT", "CENTER", "RIGHT",
+  "UP", "MIDDLE", "DOWN", "PINCH", "RELEASE", "UNKNOWN"
+};
+
 Command parseCommand(const char* command) {
   if (strcmp(command, "FRONT") == 0) return FRONT;
   if (strcmp(command, "ORIGIN") == 0) return ORIGIN;
@@ -92,78 +97,98 @@ ArmCommand ARM={ORIGIN, CENTER, MIDDLE, RELEASE};
 
 //------ARM MOVEMENT------
 void ARMExecuteY(Command command){
+  bool inValid=false;
+  char buffer[50]={0};
   switch(command){
       case FRONT:
-          Serial.println("Executing FRONT command");
           servoWrite(Y_SERVO_CHANNEL, 0);
           break;
-      case BACK:
-          Serial.println("Executing BACK command");
-          servoWrite(Y_SERVO_CHANNEL, 180);
-          break;
       case ORIGIN:
-          Serial.println("Executing ORIGIN command");
           servoWrite(Y_SERVO_CHANNEL, 90);
           break;
-      default:
-          Serial.println("Invalid Y command");
+      case BACK:
+          servoWrite(Y_SERVO_CHANNEL, 180);
           break;
+      default:
+          inValid=true;
+          break;
+  }
+  if(inValid){
+      Serial.println("Invalid Y command");
+  }else{
+      snprintf(buffer, sizeof(buffer), "Executing Y command: %s", commandNames[command]);
+      Serial.println(buffer);
   }
 }
 
 void ARMExecuteX(Command command){
+  bool inValid=false;
+  char buffer[50]={0};
   switch(command){
       case LEFT:
-          Serial.println("Executing LEFT command");
           servoWrite(X_SERVO_CHANNEL, 0);
           break;
-      case RIGHT:
-          Serial.println("Executing RIGHT command");
-          servoWrite(X_SERVO_CHANNEL, 180);
-          break;
       case CENTER:
-          Serial.println("Executing CENTER command");
           servoWrite(X_SERVO_CHANNEL, 90);
           break;
-      default:
-          Serial.println("Invalid X command");
+      case RIGHT:
+          servoWrite(X_SERVO_CHANNEL, 180);
           break;
+      default:
+          inValid=true;
+          break;
+  }
+  if(inValid){
+      Serial.println("Invalid X command");
+  }else{
+      snprintf(buffer, sizeof(buffer), "Executing X command: %s", commandNames[command]);
+      Serial.println(buffer);
   }
 }
 
 void ARMExecuteZ(Command command){
+  bool inValid=false;
+  char buffer[50]={0};
   switch(command){
       case UP:
-          Serial.println("Executing UP command");
           servoWrite(Z_SERVO_CHANNEL, 0);
           break;
-      case DOWN:
-          Serial.println("Executing DOWN command");
-          servoWrite(Z_SERVO_CHANNEL, 180);
-          break;
       case MIDDLE:
-          Serial.println("Executing MIDDLE command");
           servoWrite(Z_SERVO_CHANNEL, 90);
           break;
-      default:
-          Serial.println("Invalid Z command");
+      case DOWN:
+          servoWrite(Z_SERVO_CHANNEL, 180);
           break;
+      default:
+          inValid=true;
+          break;
+  }
+  if(inValid){
+      Serial.println("Invalid Z command");
+  }else{
+      snprintf(buffer, sizeof(buffer), "Executing Z command: %s", commandNames[command]);
+      Serial.println(buffer);
   }
 }
 
 void ARMExecuteFINGER(Command command){
+  char buffer[50]={0};
+  bool inValid=false;
   switch(command){
       case PINCH:
-          Serial.println("Executing PINCH command");
           servoWrite(FINGER_SERVO_CHANNEL, 0);
           break;
       case RELEASE:
-          Serial.println("Executing RELEASE command");
           servoWrite(FINGER_SERVO_CHANNEL, 180);
           break;
       default:
-          Serial.println("Invalid FINGER command");
           break;
+  }
+  if(inValid){
+      Serial.println("Invalid FINGER command");
+  }else{
+      snprintf(buffer, sizeof(buffer), "Executing FINGER command: %s", commandNames[command]);
+      Serial.println(buffer);
   }
 }
 //------ARM MOVEMENT END------
@@ -199,9 +224,8 @@ void loop() {
 
   sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
   if (strcmp(arg[0], "LIST") == 0) {
-
-    snprintf(buffer, sizeof(buffer), "\nY: %d, X: %d, Z: %d, FINGER: %d\n", PrevARM.Y, PrevARM.X, PrevARM.Z, PrevARM.FINGER);
-    Serial.print(buffer);
+    snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", commandNames[PrevARM.Y], commandNames[PrevARM.X], commandNames[PrevARM.Z], commandNames[PrevARM.FINGER]);
+    Serial.println(buffer);
     return;
   }
   if(strcmp(arg[0], "RESET")==0){
@@ -210,8 +234,8 @@ void loop() {
     parseArm(arg, &ARM, &PrevARM);
   }
 
-  snprintf(buffer, sizeof(buffer), "\nY: %d, X: %d, Z: %d, FINGER: %d\n", ARM.Y, ARM.X, ARM.Z, ARM.FINGER);
-  
+  snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", commandNames[ARM.Y], commandNames[ARM.X], commandNames[ARM.Z], commandNames[ARM.FINGER]);
+  Serial.println(buffer);
 
   if(ARM.Y!=PrevARM.Y){
     ARMExecuteY(ARM.Y);
