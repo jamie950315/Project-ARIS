@@ -47,17 +47,11 @@ const char* commandNames[] = {
 };
 
 Command parseCommand(const char* command) {
-  if (strcmp(command, "FRONT") == 0) return FRONT;
-  if (strcmp(command, "ORIGIN") == 0) return ORIGIN;
-  if (strcmp(command, "BACK") == 0) return BACK;
-  if (strcmp(command, "LEFT") == 0) return LEFT;
-  if (strcmp(command, "CENTER") == 0) return CENTER;
-  if (strcmp(command, "RIGHT") == 0) return RIGHT;
-  if (strcmp(command, "UP") == 0) return UP;
-  if (strcmp(command, "MIDDLE") == 0) return MIDDLE;
-  if (strcmp(command, "DOWN") == 0) return DOWN;
-  if (strcmp(command, "PINCH") == 0) return PINCH;
-  if (strcmp(command, "RELEASE") == 0) return RELEASE;
+  for(int i=0;i<int(sizeof(commandNames)/sizeof(commandNames[0]));++i){
+    if(strcmp(command, commandNames[i])==0){
+      return (Command)i;
+    }
+  }
   
   return UNKNOWN;
 }
