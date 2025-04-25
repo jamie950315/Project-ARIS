@@ -96,9 +96,14 @@ ArmCommand ARM={ORIGIN, CENTER, MIDDLE, RELEASE};
 //------PARSE COMMANDS END------
 
 //------ARM MOVEMENT------
+void logCommand(const char* axis, Command command) {
+  char buffer[50]={0};
+  snprintf(buffer, sizeof(buffer), "Executing %s command: %s", axis, commandNames[command]);
+  Serial.println(buffer);
+}
+
 void ARMExecuteY(Command command){
   bool inValid=false;
-  char buffer[50]={0};
   switch(command){
       case FRONT:
           servoWrite(Y_SERVO_CHANNEL, 0);
@@ -116,14 +121,12 @@ void ARMExecuteY(Command command){
   if(inValid){
       Serial.println("Invalid Y command");
   }else{
-      snprintf(buffer, sizeof(buffer), "Executing Y command: %s", commandNames[command]);
-      Serial.println(buffer);
+      logCommand("Y", command);
   }
 }
 
 void ARMExecuteX(Command command){
   bool inValid=false;
-  char buffer[50]={0};
   switch(command){
       case LEFT:
           servoWrite(X_SERVO_CHANNEL, 0);
@@ -141,14 +144,12 @@ void ARMExecuteX(Command command){
   if(inValid){
       Serial.println("Invalid X command");
   }else{
-      snprintf(buffer, sizeof(buffer), "Executing X command: %s", commandNames[command]);
-      Serial.println(buffer);
+      logCommand("X", command);
   }
 }
 
 void ARMExecuteZ(Command command){
   bool inValid=false;
-  char buffer[50]={0};
   switch(command){
       case UP:
           servoWrite(Z_SERVO_CHANNEL, 0);
@@ -166,13 +167,11 @@ void ARMExecuteZ(Command command){
   if(inValid){
       Serial.println("Invalid Z command");
   }else{
-      snprintf(buffer, sizeof(buffer), "Executing Z command: %s", commandNames[command]);
-      Serial.println(buffer);
+      logCommand("Z", command);
   }
 }
 
 void ARMExecuteFINGER(Command command){
-  char buffer[50]={0};
   bool inValid=false;
   switch(command){
       case PINCH:
@@ -182,13 +181,13 @@ void ARMExecuteFINGER(Command command){
           servoWrite(FINGER_SERVO_CHANNEL, 180);
           break;
       default:
+          inValid=true;
           break;
   }
   if(inValid){
       Serial.println("Invalid FINGER command");
   }else{
-      snprintf(buffer, sizeof(buffer), "Executing FINGER command: %s", commandNames[command]);
-      Serial.println(buffer);
+      logCommand("FINGER", command);
   }
 }
 //------ARM MOVEMENT END------
