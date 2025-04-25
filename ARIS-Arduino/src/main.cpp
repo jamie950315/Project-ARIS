@@ -3,8 +3,28 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <Servo.h>
+#include <string.h>
+#include <Adafruit_PWMServoDriver.h>
 
+//------SERVO DRIVER CONFIGURATION------
+#define Y_SERVO_CHANNEL 0
+#define X_SERVO_CHANNEL 1
+#define Z_SERVO_CHANNEL 2
+#define FINGER_SERVO_CHANNEL 3
+#define SERVO_MIN 150
+#define SERVO_MAX 600
+#define SERVO_FREQ 50
+#define SERVO_OSCILLATOR 27000000
+
+Adafruit_PWMServoDriver ServoDriver=Adafruit_PWMServoDriver();
+
+void servoWrite(uint8_t channel, uint8_t angle){
+  uint16_t pulse=map(angle, 0, 180, SERVO_MIN, SERVO_MAX);
+  ServoDriver.setPWM(channel, 0, pulse);
+}
+//------SERVO DRIVER CONFIGURATION END------
+
+//------PARSE COMMANDS------
 typedef enum{
   
   FRONT=0,  //Y
@@ -44,72 +64,6 @@ typedef struct ArmCommand{
   Command FINGER;
 }ArmCommand;
 
-
-void ARMExecuteY(Command command){
-  switch(command){
-      case FRONT:
-          Serial.println("Executing FRONT command");
-          break;
-      case BACK:
-          Serial.println("Executing BACK command");
-          break;
-      case ORIGIN:
-          Serial.println("Executing ORIGIN command");
-          break;
-      default:
-          Serial.println("Invalid Y command");
-          break;
-  }
-}
-
-void ARMExecuteX(Command command){
-  switch(command){
-      case LEFT:
-          Serial.println("Executing LEFT command");
-          break;
-      case RIGHT:
-          Serial.println("Executing RIGHT command");
-          break;
-      case CENTER:
-          Serial.println("Executing CENTER command");
-          break;
-      default:
-          Serial.println("Invalid X command");
-          break;
-  }
-}
-
-void ARMExecuteZ(Command command){
-  switch(command){
-      case UP:
-          Serial.println("Executing UP command");
-          break;
-      case DOWN:
-          Serial.println("Executing DOWN command");
-          break;
-      case MIDDLE:
-          Serial.println("Executing MIDDLE command");
-          break;
-      default:
-          Serial.println("Invalid Z command");
-          break;
-  }
-}
-
-void ARMExecuteFINGER(Command command){
-  switch(command){
-      case PINCH:
-          Serial.println("Executing PINCH command");
-          break;
-      case RELEASE:
-          Serial.println("Executing RELEASE command");
-          break;
-      default:
-          Serial.println("Invalid FINGER command");
-          break;
-  }
-}
-
 void parseArm(char arg[4][10], ArmCommand* ARM, ArmCommand* PrevARM) {
   Command arr[4]={UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN};
   
@@ -132,25 +86,107 @@ void parseArm(char arg[4][10], ArmCommand* ARM, ArmCommand* PrevARM) {
   }
 }
 
-Servo YServo;
-Servo XServo;
-Servo ZServo;
-Servo FingerServo;
-
 ArmCommand PrevARM={ORIGIN, CENTER, MIDDLE, RELEASE};
 ArmCommand ARM={ORIGIN, CENTER, MIDDLE, RELEASE};
+//------PARSE COMMANDS END------
+
+//------ARM MOVEMENT------
+void ARMExecuteY(Command command){
+  switch(command){
+      case FRONT:
+          Serial.println("Executing FRONT command");
+          servoWrite(Y_SERVO_CHANNEL, 0);
+          break;
+      case BACK:
+          Serial.println("Executing BACK command");
+          servoWrite(Y_SERVO_CHANNEL, 180);
+          break;
+      case ORIGIN:
+          Serial.println("Executing ORIGIN command");
+          servoWrite(Y_SERVO_CHANNEL, 90);
+          break;
+      default:
+          Serial.println("Invalid Y command");
+          break;
+  }
+}
+
+void ARMExecuteX(Command command){
+  switch(command){
+      case LEFT:
+          Serial.println("Executing LEFT command");
+          servoWrite(X_SERVO_CHANNEL, 0);
+          break;
+      case RIGHT:
+          Serial.println("Executing RIGHT command");
+          servoWrite(X_SERVO_CHANNEL, 180);
+          break;
+      case CENTER:
+          Serial.println("Executing CENTER command");
+          servoWrite(X_SERVO_CHANNEL, 90);
+          break;
+      default:
+          Serial.println("Invalid X command");
+          break;
+  }
+}
+
+void ARMExecuteZ(Command command){
+  switch(command){
+      case UP:
+          Serial.println("Executing UP command");
+          servoWrite(Z_SERVO_CHANNEL, 0);
+          break;
+      case DOWN:
+          Serial.println("Executing DOWN command");
+          servoWrite(Z_SERVO_CHANNEL, 180);
+          break;
+      case MIDDLE:
+          Serial.println("Executing MIDDLE command");
+          servoWrite(Z_SERVO_CHANNEL, 90);
+          break;
+      default:
+          Serial.println("Invalid Z command");
+          break;
+  }
+}
+
+void ARMExecuteFINGER(Command command){
+  switch(command){
+      case PINCH:
+          Serial.println("Executing PINCH command");
+          servoWrite(FINGER_SERVO_CHANNEL, 0);
+          break;
+      case RELEASE:
+          Serial.println("Executing RELEASE command");
+          servoWrite(FINGER_SERVO_CHANNEL, 180);
+          break;
+      default:
+          Serial.println("Invalid FINGER command");
+          break;
+  }
+}
+//------ARM MOVEMENT END------
+
+
+
 
 
 void setup() {
   Serial.begin(115200);
+  ServoDriver.begin();
+  ServoDriver.setOscillatorFrequency(SERVO_OSCILLATOR);  
+  ServoDriver.setPWMFreq(SERVO_FREQ);
 
+
+  delay(10);
 }
 
 void loop() {
 
   char armInput[50]={0};
   char arg[4][10]={0};
-  char buffer[50];
+  char buffer[50]={0};
 
   Serial.println();
   Serial.println();
