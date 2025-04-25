@@ -41,14 +41,14 @@ typedef enum{
   UNKNOWN
 }Command;
 
-const char* commandNames[] = {
+const char commandNames[][10] PROGMEM={
   "FRONT", "ORIGIN", "BACK", "LEFT", "CENTER", "RIGHT",
   "UP", "MIDDLE", "DOWN", "PINCH", "RELEASE", "UNKNOWN"
 };
 
 Command parseCommand(const char* command) {
-  for(int i=0;i<int(sizeof(commandNames)/sizeof(commandNames[0]));++i){
-    if(strcmp(command, commandNames[i])==0){
+  for(int i=0;i<int(sizeof(commandNames)/sizeof((PGM_P)commandNames[0]));++i){
+    if(strcmp(command, (PGM_P)commandNames[i])==0){
       return (Command)i;
     }
   }
@@ -84,15 +84,15 @@ void parseArm(char arg[4][10], ArmCommand* ARM, ArmCommand* PrevARM) {
       }
   }
 }
-
-ArmCommand PrevARM={ORIGIN, CENTER, MIDDLE, RELEASE};
-ArmCommand ARM={ORIGIN, CENTER, MIDDLE, RELEASE};
+const ArmCommand ResetARM PROGMEM={ORIGIN, CENTER, MIDDLE, RELEASE};
+ArmCommand PrevARM;
+ArmCommand ARM;
 //------PARSE COMMANDS END------
 
 //------ARM MOVEMENT------
 void logCommand(const char* axis, Command command) {
   char buffer[50]={0};
-  snprintf(buffer, sizeof(buffer), "Executing %s command: %s", axis, commandNames[command]);
+  snprintf(buffer, sizeof(buffer), "Executing %s command: %s", axis, (PGM_P)commandNames[command]);
   Serial.println(buffer);
 }
 
@@ -184,7 +184,42 @@ void ARMExecuteFINGER(Command command){
       logCommand("FINGER", command);
   }
 }
+
+void ARMAction(ArmCommand* ARM, ArmCommand* PrevARM){
+  char buffer[50]={0};
+  snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", (PGM_P)commandNames[ARM->Y], (PGM_P)commandNames[ARM->X], (PGM_P)commandNames[ARM->Z], (PGM_P)commandNames[ARM->FINGER]);
+  Serial.println(buffer);
+  if(ARM->Y!=PrevARM->Y){
+    ARMExecuteY(ARM->Y);
+  }
+  if(ARM->X!=PrevARM->X){
+    ARMExecuteX(ARM->X);
+  }
+  if(ARM->Z!=PrevARM->Z){
+    ARMExecuteZ(ARM->Z);
+  }
+  if(ARM->FINGER!=PrevARM->FINGER){
+    ARMExecuteFINGER(ARM->FINGER);
+  }
+
+  *PrevARM=*ARM;
+}
 //------ARM MOVEMENT END------
+
+
+void startOver( char armInput[], size_t inputSize, 
+                char arg[][10], size_t argSize,
+                char buffer[], size_t bufSize) {
+  memset(armInput, 0, inputSize);
+  memset(arg, 0, argSize);
+  memset(buffer, 0, bufSize);
+
+  Serial.println();
+  Serial.println();
+  Serial.print("Enter command (Y X Z FINGER): ");
+}
+
+
 
 
 
@@ -196,54 +231,64 @@ void setup() {
   ServoDriver.setOscillatorFrequency(SERVO_OSCILLATOR);  
   ServoDriver.setPWMFreq(SERVO_FREQ);
 
+  Serial.println();
+  Serial.println();
+  Serial.print("Enter command (Y X Z FINGER): ");
+
+  memcpy_P(&PrevARM, &ResetARM, sizeof(ArmCommand));
+  memcpy_P(&ARM, &ResetARM, sizeof(ArmCommand));
 
   delay(10);
 }
 
 void loop() {
 
-  char armInput[50]={0};
-  char arg[4][10]={0};
-  char buffer[50]={0};
+  static char armInput[50]={0};
+  static char arg[4][10]={0};
+  static char buffer[50]={0};
 
-  Serial.println();
-  Serial.println();
-  Serial.print("Enter command (Y X Z FINGER): ");
-  while(!Serial.available()) {
-    // Wait for user input
-  }
-  Serial.readBytesUntil('\n', armInput, sizeof(armInput)-1);
-  armInput[strcspn(armInput, "\r\n")]=0;
+  if(Serial.available()){
+    Serial.readBytesUntil('\n', armInput, sizeof(armInput)-1);
+    armInput[strcspn(armInput, "\r\n")]=0;
+  
+    sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
+    if(strcmp(arg[0], "LIST") == 0) {
+      snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", (PGM_P)commandNames[PrevARM.Y], (PGM_P)commandNames[PrevARM.X], (PGM_P)commandNames[PrevARM.Z], (PGM_P)commandNames[PrevARM.FINGER]);
+      Serial.println(buffer);
 
-  sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
-  if (strcmp(arg[0], "LIST") == 0) {
-    snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", commandNames[PrevARM.Y], commandNames[PrevARM.X], commandNames[PrevARM.Z], commandNames[PrevARM.FINGER]);
-    Serial.println(buffer);
-    return;
-  }
-  if(strcmp(arg[0], "RESET")==0){
-    ARM=(ArmCommand){ORIGIN, CENTER, MIDDLE, RELEASE};
-  }else{
-    parseArm(arg, &ARM, &PrevARM);
+      startOver(armInput, sizeof(armInput),
+                arg, sizeof(arg),
+                buffer, sizeof(buffer));
+      return;
+
+    }
+    if(strcmp(arg[0], "RESET")==0){
+      memcpy_P(&ARM, &ResetARM, sizeof(ArmCommand));
+      ARMAction(&ARM, &PrevARM);
+
+      startOver(armInput, sizeof(armInput),
+                arg, sizeof(arg),
+                buffer, sizeof(buffer));
+      return;
+
+    }else{
+      parseArm(arg, &ARM, &PrevARM);
+    }
+  
+
+    ARMAction(&ARM, &PrevARM);
+  
+    
+
+    startOver(armInput, sizeof(armInput),
+                arg, sizeof(arg),
+                buffer, sizeof(buffer));
+
+
   }
 
-  snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", commandNames[ARM.Y], commandNames[ARM.X], commandNames[ARM.Z], commandNames[ARM.FINGER]);
-  Serial.println(buffer);
 
-  if(ARM.Y!=PrevARM.Y){
-    ARMExecuteY(ARM.Y);
-  }
-  if(ARM.X!=PrevARM.X){
-    ARMExecuteX(ARM.X);
-  }
-  if(ARM.Z!=PrevARM.Z){
-    ARMExecuteZ(ARM.Z);
-  }
-  if(ARM.FINGER!=PrevARM.FINGER){
-    ARMExecuteFINGER(ARM.FINGER);
-  }
-
-  PrevARM=ARM;
+  
 
 
 
