@@ -5,6 +5,7 @@
 #include <Adafruit_SSD1306.h>
 #include <string.h>
 #include <Adafruit_PWMServoDriver.h>
+#include <avr/pgmspace.h>
 
 //------SERVO DRIVER CONFIGURATION------
 #define Y_SERVO_CHANNEL 0
@@ -46,9 +47,16 @@ const char commandNames[][10] PROGMEM={
   "UP", "MIDDLE", "DOWN", "PINCH", "RELEASE", "UNKNOWN"
 };
 
+char getCMDNameBuf[10]={0};
+
+const char* getCommandName(Command cmd){
+  strcpy_P(getCMDNameBuf, commandNames[cmd]);
+  return getCMDNameBuf;
+}
+
 Command parseCommand(const char* command) {
-  for(int i=0;i<int(sizeof(commandNames)/sizeof((PGM_P)commandNames[0]));++i){
-    if(strcmp(command, (PGM_P)commandNames[i])==0){
+  for(int i=0;i<int(sizeof(commandNames)/sizeof(commandNames[0]));++i){
+    if(strcmp(command, getCommandName(Command(i)))==0){
       return (Command)i;
     }
   }
@@ -73,14 +81,30 @@ void parseArm(char arg[4][10], ArmCommand* ARM, ArmCommand* PrevARM) {
 
   for(int i=0;i<4;i++){
       arr[i]=parseCommand(arg[i]);
-      if(arr[i]>=FRONT&&arr[i]<=BACK){
+
+      switch(arr[i]){
+        case FRONT:
+        case ORIGIN:
+        case BACK:
           ARM->Y=arr[i];
-      }else if(arr[i]>=LEFT&&arr[i]<=RIGHT){
+          break;
+        case LEFT:
+        case CENTER:
+        case RIGHT:
           ARM->X=arr[i];
-      }else if(arr[i]>=UP&&arr[i]<=DOWN){
+          break;
+        case UP:
+        case MIDDLE:
+        case DOWN:
           ARM->Z=arr[i];
-      }else if(arr[i]>=PINCH&&arr[i]<=RELEASE){
+          break;
+        case PINCH:
+        case RELEASE:
           ARM->FINGER=arr[i];
+          break;
+        default:
+        Serial.print(F("UNKNOWN COMMAND"));
+        break; 
       }
   }
 }
@@ -90,10 +114,34 @@ ArmCommand ARM;
 //------PARSE COMMANDS END------
 
 //------ARM MOVEMENT------
-void logCommand(const char* axis, Command command) {
-  char buffer[50]={0};
-  snprintf(buffer, sizeof(buffer), "Executing %s command: %s", axis, (PGM_P)commandNames[command]);
-  Serial.println(buffer);
+void logCommand(Command command) {
+
+  switch(command){
+    case FRONT:
+    case ORIGIN:
+    case BACK:
+      Serial.print(F("Executing Y command: "));
+      break;
+    case LEFT:
+    case CENTER:
+    case RIGHT:
+      Serial.print(F("Executing X command: "));
+      break;
+    case UP:
+    case MIDDLE:
+    case DOWN:
+      Serial.print(F("Executing Z command: "));
+      break;
+    case PINCH:
+    case RELEASE:
+      Serial.print(F("Executing Finger command: "));
+      break;
+    default:
+      Serial.print(F("UNKNOWN COMMAND"));
+      break;
+  }
+
+  Serial.println(getCommandName(command));
 }
 
 void ARMExecuteY(Command command){
@@ -113,9 +161,9 @@ void ARMExecuteY(Command command){
           break;
   }
   if(inValid){
-      Serial.println("Invalid Y command");
+      Serial.println(F("Invalid Y command"));
   }else{
-      logCommand("Y", command);
+      logCommand(command);
   }
 }
 
@@ -136,9 +184,9 @@ void ARMExecuteX(Command command){
           break;
   }
   if(inValid){
-      Serial.println("Invalid X command");
+      Serial.println(F("Invalid X command"));
   }else{
-      logCommand("X", command);
+      logCommand(command);
   }
 }
 
@@ -159,9 +207,9 @@ void ARMExecuteZ(Command command){
           break;
   }
   if(inValid){
-      Serial.println("Invalid Z command");
+      Serial.println(F("Invalid Z command"));
   }else{
-      logCommand("Z", command);
+      logCommand(command);
   }
 }
 
@@ -179,15 +227,15 @@ void ARMExecuteFINGER(Command command){
           break;
   }
   if(inValid){
-      Serial.println("Invalid FINGER command");
+      Serial.println(F("Invalid FINGER command"));
   }else{
-      logCommand("FINGER", command);
+      logCommand(command);
   }
 }
 
 void ARMAction(ArmCommand* ARM, ArmCommand* PrevARM){
   char buffer[50]={0};
-  snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", (PGM_P)commandNames[ARM->Y], (PGM_P)commandNames[ARM->X], (PGM_P)commandNames[ARM->Z], (PGM_P)commandNames[ARM->FINGER]);
+  snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", getCommandName(ARM->Y), getCommandName(ARM->X), getCommandName(ARM->Z), getCommandName(ARM->FINGER));
   Serial.println(buffer);
   if(ARM->Y!=PrevARM->Y){
     ARMExecuteY(ARM->Y);
@@ -209,15 +257,18 @@ void ARMAction(ArmCommand* ARM, ArmCommand* PrevARM){
 
 void startOver( char armInput[], size_t inputSize, 
                 char arg[][10], size_t argSize,
-                char buffer[], size_t bufSize) {
+                char buffer[], size_t bufSize){
   memset(armInput, 0, inputSize);
   memset(arg, 0, argSize);
   memset(buffer, 0, bufSize);
 
   Serial.println();
   Serial.println();
-  Serial.print("Enter command (Y X Z FINGER): ");
+  Serial.print(F("Enter command (Y X Z FINGER): "));
 }
+
+
+
 
 
 
@@ -233,7 +284,7 @@ void setup() {
 
   Serial.println();
   Serial.println();
-  Serial.print("Enter command (Y X Z FINGER): ");
+  Serial.print(F("Enter command (Y X Z FINGER): "));
 
   memcpy_P(&PrevARM, &ResetARM, sizeof(ArmCommand));
   memcpy_P(&ARM, &ResetARM, sizeof(ArmCommand));
@@ -245,15 +296,15 @@ void loop() {
 
   static char armInput[50]={0};
   static char arg[4][10]={0};
-  static char buffer[50]={0};
+  static char buffer[50]={0}; 
 
   if(Serial.available()){
     Serial.readBytesUntil('\n', armInput, sizeof(armInput)-1);
     armInput[strcspn(armInput, "\r\n")]=0;
   
     sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
-    if(strcmp(arg[0], "LIST") == 0) {
-      snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", (PGM_P)commandNames[PrevARM.Y], (PGM_P)commandNames[PrevARM.X], (PGM_P)commandNames[PrevARM.Z], (PGM_P)commandNames[PrevARM.FINGER]);
+    if(strcmp(arg[0], "LIST")==0) {
+      snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", getCommandName(PrevARM.Y), getCommandName(PrevARM.X), getCommandName(PrevARM.Z), getCommandName(PrevARM.FINGER));
       Serial.println(buffer);
 
       startOver(armInput, sizeof(armInput),
