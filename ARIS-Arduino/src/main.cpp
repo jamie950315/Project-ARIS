@@ -15,7 +15,7 @@
 #define SERVO_MIN 150
 #define SERVO_MAX 600
 #define SERVO_FREQ 50
-#define SERVO_OSCILLATOR 27000000
+#define SERVO_OSCILLATOR 25420595 //depends on different driver
 
 Adafruit_PWMServoDriver ServoDriver=Adafruit_PWMServoDriver();
 
@@ -47,15 +47,17 @@ const char commandNames[][10] PROGMEM={
   "UP", "MIDDLE", "DOWN", "PINCH", "RELEASE", "UNKNOWN"
 };
 
-char getCMDNameBuf[10]={0};
-
-const char* getCommandName(Command cmd){
-  strcpy_P(getCMDNameBuf, commandNames[cmd]);
-  return getCMDNameBuf;
+const char* getCommandName(Command cmd) {
+  static char nameBuffer[4][10];
+  static uint8_t bufIndex = 0;
+  strcpy_P(nameBuffer[bufIndex], commandNames[cmd]);
+  const char* result = nameBuffer[bufIndex];
+  bufIndex = (bufIndex + 1) % 4;
+  return result;
 }
 
 Command parseCommand(const char* command) {
-  for(int i=0;i<int(sizeof(commandNames)/sizeof(commandNames[0]));++i){
+  for(uint8_t i=0;i<uint8_t(sizeof(commandNames)/sizeof(commandNames[0]));++i){
     if(strcmp(command, getCommandName(Command(i)))==0){
       return (Command)i;
     }
@@ -103,8 +105,7 @@ void parseArm(char arg[4][10], ArmCommand* ARM, ArmCommand* PrevARM) {
           ARM->FINGER=arr[i];
           break;
         default:
-        Serial.print(F("UNKNOWN COMMAND"));
-        break; 
+          break; 
       }
   }
 }
@@ -137,7 +138,6 @@ void logCommand(Command command) {
       Serial.print(F("Executing Finger command: "));
       break;
     default:
-      Serial.print(F("UNKNOWN COMMAND"));
       break;
   }
 
@@ -344,4 +344,3 @@ void loop() {
 
 
 }
-
