@@ -235,7 +235,7 @@ void ARMExecuteFINGER(Command command){
 
 void ARMAction(ArmCommand* ARM, ArmCommand* PrevARM){
   char buffer[50]={0};
-  snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", getCommandName(ARM->Y), getCommandName(ARM->X), getCommandName(ARM->Z), getCommandName(ARM->FINGER));
+  snprintf(buffer, sizeof(buffer), "Y: %s, X: %s, Z: %s, FINGER: %s", getCommandName(ARM->Y), getCommandName(ARM->X), getCommandName(ARM->Z), getCommandName(ARM->FINGER));
   Serial.println(buffer);
   if(ARM->Y!=PrevARM->Y){
     ARMExecuteY(ARM->Y);
@@ -262,9 +262,7 @@ void startOver( char armInput[], size_t inputSize,
   memset(arg, 0, argSize);
   memset(buffer, 0, bufSize);
 
-  Serial.println();
-  Serial.println();
-  Serial.print(F("Enter command (Y X Z FINGER): "));
+  Serial.println(F("Arduino Ready"));
 }
 
 
@@ -282,9 +280,7 @@ void setup() {
   ServoDriver.setOscillatorFrequency(SERVO_OSCILLATOR);  
   ServoDriver.setPWMFreq(SERVO_FREQ);
 
-  Serial.println();
-  Serial.println();
-  Serial.print(F("Enter command (Y X Z FINGER): "));
+  Serial.println(F("Arduino Ready"));
 
   memcpy_P(&PrevARM, &ResetARM, sizeof(ArmCommand));
   memcpy_P(&ARM, &ResetARM, sizeof(ArmCommand));
@@ -304,7 +300,7 @@ void loop() {
   
     sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
     if(strcmp(arg[0], "LIST")==0) {
-      snprintf(buffer, sizeof(buffer), "\nY: %s, X: %s, Z: %s, FINGER: %s", getCommandName(PrevARM.Y), getCommandName(PrevARM.X), getCommandName(PrevARM.Z), getCommandName(PrevARM.FINGER));
+      snprintf(buffer, sizeof(buffer), "Y: %s, X: %s, Z: %s, FINGER: %s", getCommandName(PrevARM.Y), getCommandName(PrevARM.X), getCommandName(PrevARM.Z), getCommandName(PrevARM.FINGER));
       Serial.println(buffer);
 
       startOver(armInput, sizeof(armInput),
