@@ -298,7 +298,8 @@ void loop() {
     Serial.readBytesUntil('\n', armInput, sizeof(armInput)-1);
     armInput[strcspn(armInput, "\r\n")]=0;
   
-    sscanf(armInput, "%s %s %s %s", arg[0], arg[1], arg[2], arg[3]);
+    // Limit each argument to 9 characters to avoid buffer overflows
+    sscanf(armInput, "%9s %9s %9s %9s", arg[0], arg[1], arg[2], arg[3]);
     if(strcmp(arg[0], "LIST")==0) {
       snprintf(buffer, sizeof(buffer), "Y: %s, X: %s, Z: %s, FINGER: %s", getCommandName(PrevARM.Y), getCommandName(PrevARM.X), getCommandName(PrevARM.Z), getCommandName(PrevARM.FINGER));
       Serial.println(buffer);
