@@ -119,7 +119,8 @@ while(1){
     armInput[strcspn(armInput, "\n")] = 0;
 
 
-    sscanf(armInput, "%s %s %s", arg[0], arg[1], arg[2]);
+    // Prevent buffer overflow by limiting each parsed argument
+    sscanf(armInput, "%9s %9s %9s", arg[0], arg[1], arg[2]);
     if(strcmp(arg[0], "EXIT")==0) break;
     if(strcmp(arg[0], "LIST")==0){
         printf("\nY: %d, X: %d, FINGER: %d\n", PrevARM.Y, PrevARM.X, PrevARM.FINGER);
